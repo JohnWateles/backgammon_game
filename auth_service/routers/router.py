@@ -29,9 +29,36 @@ def get_password_hash(password: str) -> str:
 
 @router_identification.get("/by_login")
 async def identification_by_login(login: str, password: str):
-    return None
+    response = await auth_service_db_client.get("/user/by_login", params={"user_login": login})
+    response = response.json()
+    return_message = check_response(response, password)
+    return {
+        "message": return_message
+    }
 
 
 @router_identification.get("/by_email")
 async def identification_by_email(email: str, password: str):
-    return None
+    response = await auth_service_db_client.get("/user/by_email", params={"user_email": email})
+    response = response.json()
+    return_message = check_response(response, password)
+    return {
+        "message": return_message
+    }
+
+
+async def identification_by_token():
+    pass
+
+
+def check_response(response: dict, password: str):
+    return_message = "Error ;)"
+    if ("data" in response) and (len(response["data"]) == 1):
+        user_db = response["data"][0]
+        if user_db["hashed_password"] == get_password_hash(password):
+            return_message = "Correct password"
+        else:
+            return_message = "Incorrect password"
+    elif "message" in response:
+        return_message = response["message"]
+    return return_message
